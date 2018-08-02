@@ -59,7 +59,8 @@ def col2im(col, input_shape, filter_h, filter_w, stride=1, pad=0):
     return img[:, :, pad:H + pad, pad:W + pad]
 
 class AffineLayer:
-    def __init__(self, W, b):
+    def __init__(self, name, W, b):
+        self.name = name
         self.W = W
         self.b = b
         self.x = None
@@ -86,7 +87,8 @@ class AffineLayer:
 
 
 class ReluLayer:
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.mask = None
         self.y = None
 
@@ -103,7 +105,8 @@ class ReluLayer:
 
 
 class SoftmaxLayer:
-    def __init__(self, loss_calculator):
+    def __init__(self, name, loss_calculator):
+        self.name = name
         self.y = None
         self.t = None
         self.loss_calculator = loss_calculator
@@ -133,7 +136,8 @@ class BatchNormalization:
     """
     http://arxiv.org/abs/1502.03167
     """
-    def __init__(self, gamma, beta, momentum=0.9, running_mean=None, running_var=None):
+    def __init__(self, name, gamma, beta, momentum=0.9, running_mean=None, running_var=None):
+        self.name = name
         self.gamma = gamma
         self.beta = beta
         self.momentum = momentum
@@ -214,7 +218,8 @@ class BatchNormalization:
 
 
 class Convolution:
-    def __init__(self, W, b, stride=1, pad=0):
+    def __init__(self, name, W, b, stride=1, pad=0):
+        self.name = name
         self.W = W
         self.b = b
         self.stride = stride
@@ -269,7 +274,8 @@ class Convolution:
 
 
 class Pooling:
-    def __init__(self, pool_h, pool_w, stride=1, pad=0):
+    def __init__(self, name, pool_h, pool_w, stride=1, pad=0):
+        self.name = name
         self.pool_h = pool_h
         self.pool_w = pool_w
         self.stride = stride
