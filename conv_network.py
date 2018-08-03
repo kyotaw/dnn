@@ -15,7 +15,7 @@ class ConvolutionalNetwork:
         std=0.01):
 
         self.input_dim = input_dim
-        self.conv_filter_params = input_dim
+        self.conv_filter_params = conv_filter_params
         self.output_size = output_size
         self.hidden_size = hidden_size
         
