@@ -1,5 +1,7 @@
 import numpy as np
 
+from dnn.utils import *
+
 
 def im2col(input_data, filter_h, filter_w, stride=1, pad=0):
     """
@@ -70,6 +72,14 @@ class AffineLayer:
         self.dx = None
         self.original_x_shape = None
 
+    @property
+    def params(self):
+        return {key_W(self.name): self.W, key_b(self.name): self.b}
+
+    @property
+    def grads(self):
+        return {key_W(self.name): self.dW, key_b(self.name): self.db}
+    
     def forward(self, x, is_train):
         self.original_x_shape = x.shape
         x = x.reshape(x.shape[0], -1)
@@ -91,7 +101,15 @@ class ReluLayer:
         self.name = name
         self.mask = None
         self.y = None
+    
+    @property
+    def params(self):
+        return {}
 
+    @property
+    def grads(self):
+        return {}
+    
     def forward(self, x, is_train):
         self.mask = (x <= 0)
         self.y = x.copy()
@@ -110,6 +128,14 @@ class SoftmaxLayer:
         self.y = None
         self.t = None
         self.loss_calculator = loss_calculator
+    
+    @property
+    def params(self):
+        return {}
+    
+    @property
+    def grads(self):
+        return {}
 
     def forward(self, x, t):
         self.t = t
@@ -153,7 +179,15 @@ class BatchNormalization:
         self.std = None
         self.dgamma = None
         self.dbeta = None
+    
+    @property
+    def params(self):
+        return {key_gamma(self.name): self.gamma, key_beta(self.name): self.beta}
 
+    @property
+    def grads(self):
+        return {key_gamma(self.name): self.dgamma, key_beta(self.name): self.dbeta}
+   
     def forward(self, x, is_train=True):
         self.input_shape = x.shape
         if x.ndim != 2:
@@ -234,6 +268,14 @@ class Convolution:
         self.dW = None
         self.db = None
 
+    @property
+    def params(self):
+        return {key_W(self.name): self.W, key_b(self.name): self.b}
+    
+    @property
+    def grads(self):
+        return {key_W(self.name): self.dW, key_b(self.name): self.db}
+    
     def output_size(self, input_height, input_width):
         FN, C, FH, FW = self.W.shape
         out_h = 1 + int((input_height + 2 * self.pad - FH) / self.stride)
@@ -283,7 +325,15 @@ class Pooling:
         
         self.x = None
         self.arg_max = None
+    
+    @property
+    def params(self):
+        return {}
 
+    @property
+    def grads(self):
+        return {}
+    
     def output_size(self, input_height, input_size, input_num):
         out_w = int(input_num * (input_height / 2) * (input_height / 2))
         out_h = int(input_num * (input_width / 2) * (input_width / 2))

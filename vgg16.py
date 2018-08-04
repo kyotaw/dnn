@@ -5,6 +5,8 @@ from dnn.utils import *
 from dnn.losses import *
 from dnn.weight_initializers import he
 
+from mine.backend.core.log import StdLogger
+
 
 def _make_conv_params(num, channels, height, width, stride, pad):
     return {
@@ -97,7 +99,9 @@ class Vgg16:
 
         # section6
         self._add_affine('affine_6_1', 25088, 4096)
+        self._add_relu('relu_6_1')
         self._add_affine('affine_6_2', 4096, 4096)
+        self._add_relu('relu_6_2')
         self._add_affine('affine_6_3', 4096, 1000)
 
         # output
@@ -128,10 +132,27 @@ class Vgg16:
         self.output_layer = SoftmaxLayer('softmax', CrossEntropyError())
 
     def predict(self, x, is_train=False):
+        logger = StdLogger('VGG16')
+        logger.log('##### predict() START #####')
         for key, layer in self.layers.items():
+            logger.log('START layer: ' + key)
             x = layer.forward(x, is_train)
+            logger.log('END layer: ' + key)
+        logger.log('##### predict() END #####')
 
         return x
+
+    def train(self, x, t, optimizer):
+        self.loss(x, t, is_train=True)
+        dy = 1
+        dy = self.output_layer.backward(dy)
+        layers = list(self.layers.values())
+        layers.reverse()
+        for layer in layers:
+            dy = layer.backward(dy)
+
+        optimizer.update(self)
+
 
     def loss(self, x, t, is_train=False):
         y = self.predict(x, is_train)
@@ -145,7 +166,7 @@ class Vgg16:
             t = np.argmax(t, axis=1)
         accuracy = np.sum(y == t) / float(x.shape[0])
         return accuracy
-    
+
     def gradient(self, x, t):
         loss = self.loss(x, t, is_train=True)
         dy = 1

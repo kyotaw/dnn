@@ -49,6 +49,17 @@ class ConvolutionalNetwork:
             x = layer.forward(x, is_train)
 
         return x
+    
+    def train(self, x, t, optimizer):
+        self.loss(x, t, is_train=True)
+        dy = 1
+        dy = self.output_layer.backward(dy)
+        layers = list(self.layers.values())
+        layers.reverse()
+        for layer in layers:
+            dy = layer.backward(dy)
+
+        optimizer.update(self)
 
     def loss(self, x, t, is_train=False):
         y = self.predict(x, is_train)
