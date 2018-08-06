@@ -30,7 +30,6 @@ def _make_pool_params(height, width, stride, pad):
 
 class Vgg16:
     def __init__(self):
-        self.params = {}
         self.layers = OrderedDict()
 
         # section1
@@ -110,8 +109,6 @@ class Vgg16:
     def _add_conv(self, name, params, std):
         conv = convolution(name, params, 0.01)
         self.layers[name] = conv
-        self.params[key_W(name)] = conv.W
-        self.params[key_b(name)] = conv.b
    
     def _add_relu(self, name):
         rel = relu(name)
@@ -125,34 +122,36 @@ class Vgg16:
         std = he(input_size)
         aff = affine(name, input_size, output_size, std)
         self.layers[name] = aff
-        self.params[key_W(name)] = aff.W
-        self.params[key_b(name)] = aff.b
 
     def _add_output(self):
         self.output_layer = SoftmaxLayer('softmax', CrossEntropyError())
 
     def predict(self, x, is_train=False):
         logger = StdLogger('VGG16')
-        logger.log('##### predict() START #####')
         for key, layer in self.layers.items():
             logger.log('START layer: ' + key)
             x = layer.forward(x, is_train)
             logger.log('END layer: ' + key)
-        logger.log('##### predict() END #####')
 
         return x
 
     def train(self, x, t, optimizer):
+        logger = StdLogger('VGG16')
+        logger.log('##### Forward START #####')
         self.loss(x, t, is_train=True)
+        logger.log('##### Forward END #####')
         dy = 1
         dy = self.output_layer.backward(dy)
         layers = list(self.layers.values())
         layers.reverse()
+        logger.log('##### Backward START #####')
         for layer in layers:
             dy = layer.backward(dy)
+        logger.log('##### Backward END #####')
 
+        logger.log('##### Optimize START #####')
         optimizer.update(self)
-
+        logger.log('##### Optimize END #####')
 
     def loss(self, x, t, is_train=False):
         y = self.predict(x, is_train)
@@ -167,19 +166,3 @@ class Vgg16:
         accuracy = np.sum(y == t) / float(x.shape[0])
         return accuracy
 
-    def gradient(self, x, t):
-        loss = self.loss(x, t, is_train=True)
-        dy = 1
-        dy = self.output_layer.backward(dy)
-        layers = list(self.layers.values())
-        layers.reverse()
-        for layer in layers:
-            dy = layer.backward(dy)
-
-        grads = {}
-        for name, layer in self.layers.items():
-            if key_W(name) in self.params and key_b(name) in self.params:
-                grads[key_W(name)] = layer.dW
-                grads[key_b(name)] = layer.db
-            
-        return grads

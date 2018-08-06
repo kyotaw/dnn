@@ -39,7 +39,7 @@ class Trainer:
             iteration = max(math.ceil(self.train_size / self.batch_size), 1)
             for i in range(iteration):
                 self._train()
-                logger.log_info('Epoch: ' + str(e) + '/' + str(self.epochs) + ', Iteration: ' + str(i) + '/' + str(iteration))
+                logger.log_info('Epoch: ' + str(e) + '/' + str(self.epochs) + ', Iteration: ' + str(i + 1) + '/' + str(iteration))
             
             train_acc, test_acc = self._evaluate()
             self.train_acc_list.append(train_acc)
@@ -61,6 +61,16 @@ class Trainer:
         self.network.train(x_batch, t_batch, self.optimizer)
 
     def _evaluate(self):
-       train_acc = self.network.accuracy(self.x_train, self.t_train)
-       test_acc = self.network.accuracy(self.x_test, self.t_test)
+       logger = StdLogger('Trainer')
+       logger.log_info('Accuracy train START')
+       batch_mask = np.random.choice(self.train_size, self.batch_size)
+       x_batch = self.x_train[batch_mask]
+       t_batch = self.t_train[batch_mask]
+       train_acc = self.network.accuracy(x_batch, t_batch)
+       logger.log_info('Accuracy train End')
+       logger.log_info('Accuracy test START')
+       x_test = self.x_test[batch_mask]
+       t_test = self.t_test[batch_mask]
+       test_acc = self.network.accuracy(x_test, t_test)
+       logger.log_info('Accuracy test End')
        return train_acc, test_acc
